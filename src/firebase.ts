@@ -3,8 +3,27 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+function cleanEnvValue(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  return value.trim().replace(/^["']|["']$/g, '');
+}
+
+const resolvedFirebaseConfig = {
+  apiKey: cleanEnvValue(import.meta.env.VITE_FIREBASE_API_KEY) || firebaseConfig.apiKey,
+  authDomain: cleanEnvValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || firebaseConfig.authDomain,
+  projectId: cleanEnvValue(import.meta.env.VITE_FIREBASE_PROJECT_ID) || firebaseConfig.projectId,
+  storageBucket:
+    cleanEnvValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || firebaseConfig.storageBucket,
+  messagingSenderId:
+    cleanEnvValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) ||
+    firebaseConfig.messagingSenderId,
+  appId: cleanEnvValue(import.meta.env.VITE_FIREBASE_APP_ID) || firebaseConfig.appId,
+  firestoreDatabaseId:
+    cleanEnvValue(import.meta.env.VITE_FIREBASE_DATABASE_ID) || firebaseConfig.firestoreDatabaseId,
+};
+
+const app = initializeApp(resolvedFirebaseConfig);
+export const db = getFirestore(app, resolvedFirebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 

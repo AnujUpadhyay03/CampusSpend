@@ -25,6 +25,10 @@ export function AuthGate() {
         setErrorMsg(
           `This domain (${host}) is not authorized for Firebase sign-in yet. Add "${host}" in Firebase Console → Authentication → Settings → Authorized domains.`,
         );
+      } else if (code === 'auth/api-key-not-valid' || rawMsg.includes('api-key-not-valid')) {
+        setErrorMsg(
+          'Firebase API key is invalid, restricted, or missing. Verify your active Web API Key in Firebase Console → Project Settings and set VITE_FIREBASE_API_KEY in Vercel Environment Variables, then redeploy.',
+        );
       } else if (code === 'auth/popup-blocked') {
         setErrorMsg('Sign-in popup was blocked by your browser. Please allow popups and try again.');
       } else if (code === 'auth/popup-closed-by-user') {
