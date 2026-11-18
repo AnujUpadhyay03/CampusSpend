@@ -75,8 +75,12 @@ export function subscribeUserProfile(
       });
     },
     (error) => {
-      if (onError) onError(error);
-      else handleFirestoreError(error, OperationType.GET, path);
+      try {
+        handleFirestoreError(error, OperationType.GET, path);
+      } catch (formattedErr) {
+        if (onError) onError(formattedErr);
+        else throw formattedErr;
+      }
     },
   );
 }
@@ -109,8 +113,12 @@ export function subscribeExpenses(
       onData(items);
     },
     (error) => {
-      if (onError) onError(error);
-      else handleFirestoreError(error, OperationType.LIST, path);
+      try {
+        handleFirestoreError(error, OperationType.LIST, path);
+      } catch (formattedErr) {
+        if (onError) onError(formattedErr);
+        else throw formattedErr;
+      }
     },
   );
 }
@@ -137,8 +145,12 @@ export function subscribeCategoryBudgets(
       onData(items);
     },
     (error) => {
-      if (onError) onError(error);
-      else handleFirestoreError(error, OperationType.LIST, path);
+      try {
+        handleFirestoreError(error, OperationType.LIST, path);
+      } catch (formattedErr) {
+        if (onError) onError(formattedErr);
+        else throw formattedErr;
+      }
     },
   );
 }
@@ -168,8 +180,12 @@ export function subscribeFriends(
       onData(items);
     },
     (error) => {
-      if (onError) onError(error);
-      else handleFirestoreError(error, OperationType.LIST, path);
+      try {
+        handleFirestoreError(error, OperationType.LIST, path);
+      } catch (formattedErr) {
+        if (onError) onError(formattedErr);
+        else throw formattedErr;
+      }
     },
   );
 }
@@ -217,8 +233,12 @@ export function subscribeSplits(
       onData(items);
     },
     (error) => {
-      if (onError) onError(error);
-      else handleFirestoreError(error, OperationType.LIST, path);
+      try {
+        handleFirestoreError(error, OperationType.LIST, path);
+      } catch (formattedErr) {
+        if (onError) onError(formattedErr);
+        else throw formattedErr;
+      }
     },
   );
 }
