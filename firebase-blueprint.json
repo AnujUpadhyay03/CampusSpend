@@ -1,0 +1,318 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Student profile, allowance configuration, and onboarding/trial preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "email": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120
+        },
+        "campusCity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "livingSetup": {
+          "type": "string",
+          "enum": ["Hostel / PG", "Shared Flat", "Day Scholar"]
+        },
+        "monthlyAllowanceInr": {
+          "type": "number"
+        },
+        "alertThresholdPercent": {
+          "type": "number"
+        },
+        "onboardingCompleted": {
+          "type": "boolean"
+        },
+        "proTrialActive": {
+          "type": "boolean"
+        },
+        "proTrialStartedAtMillis": {
+          "type": "number"
+        },
+        "streakDays": {
+          "type": "number"
+        },
+        "lastCheckInDate": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "email",
+        "campusCity",
+        "livingSetup",
+        "monthlyAllowanceInr",
+        "alertThresholdPercent",
+        "onboardingCompleted",
+        "proTrialActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Individual student expense entry logged via UPI, Cash, or Card.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "amountInr": {
+          "type": "number"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Food & Mess",
+            "Travel & Auto",
+            "Shopping",
+            "Subscriptions",
+            "Study & Books",
+            "Shared Hangout",
+            "Other"
+          ]
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["UPI", "CASH", "CARD"]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "timestampMillis": {
+          "type": "number"
+        },
+        "splitId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "amountInr",
+        "category",
+        "paymentMethod",
+        "note",
+        "timestampMillis",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CategoryBudget": {
+      "title": "CategoryBudget",
+      "description": "Monthly spending cap per student expense category.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Food & Mess",
+            "Travel & Auto",
+            "Shopping",
+            "Subscriptions",
+            "Study & Books",
+            "Shared Hangout",
+            "Other"
+          ]
+        },
+        "limitInr": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "category", "limitInr", "createdAt", "updatedAt"]
+    },
+    "Friend": {
+      "title": "Friend",
+      "description": "Hostel roommate or campus friend for splitting shared bills.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "hostelOrTag": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80
+        },
+        "upiHandle": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "name", "hostelOrTag", "createdAt", "updatedAt"]
+    },
+    "BillSplit": {
+      "title": "BillSplit",
+      "description": "Shared hostel or friend bill with per-friend settlement tracking.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "totalAmountInr": {
+          "type": "number"
+        },
+        "paidBy": {
+          "type": "string",
+          "enum": ["ME", "FRIEND"]
+        },
+        "payerFriendId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "payerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "includeMyShare": {
+          "type": "boolean"
+        },
+        "myShareInr": {
+          "type": "number"
+        },
+        "linkedExpenseId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "shares": {
+          "type": "array"
+        },
+        "timestampMillis": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "totalAmountInr",
+        "paidBy",
+        "payerName",
+        "includeMyShare",
+        "myShareInr",
+        "shares",
+        "timestampMillis",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Per-user CampusSpend student profile and budget settings."
+    },
+    "/users/{userId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Expenses logged by the signed-in student."
+    },
+    "/users/{userId}/categoryBudgets/{categoryId}": {
+      "schema": { "$ref": "#/entities/CategoryBudget" },
+      "description": "Monthly spending cap per category for the signed-in student."
+    },
+    "/users/{userId}/friends/{friendId}": {
+      "schema": { "$ref": "#/entities/Friend" },
+      "description": "Hostel and campus friends added by the signed-in student."
+    },
+    "/users/{userId}/splits/{splitId}": {
+      "schema": { "$ref": "#/entities/BillSplit" },
+      "description": "Shared bill splits and settlement toggles for the signed-in student."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "CampusSpend",
+  "description": "Student-focused monthly allowance, UPI/cash/card expense tracking, hostel bill splitting, and overspending alerts for college students in India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

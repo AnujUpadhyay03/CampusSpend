@@ -1,0 +1,425 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global primitives
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function userDocExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function isValidLivingSetup(setup) {
+      return setup in ['Hostel / PG', 'Shared Flat', 'Day Scholar'];
+    }
+
+    function isValidCategory(category) {
+      return category in [
+        'Food & Mess',
+        'Travel & Auto',
+        'Shopping',
+        'Subscriptions',
+        'Study & Books',
+        'Shared Hangout',
+        'Other'
+      ];
+    }
+
+    function isValidPaymentMethod(method) {
+      return method in ['UPI', 'CASH', 'CARD'];
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid',
+          'name',
+          'email',
+          'campusCity',
+          'livingSetup',
+          'monthlyAllowanceInr',
+          'alertThresholdPercent',
+          'onboardingCompleted',
+          'proTrialActive',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'name',
+          'email',
+          'campusCity',
+          'livingSetup',
+          'monthlyAllowanceInr',
+          'alertThresholdPercent',
+          'onboardingCompleted',
+          'proTrialActive',
+          'proTrialStartedAtMillis',
+          'streakDays',
+          'lastCheckInDate',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid == userId
+        && data.uid is string
+        && data.uid.size() >= 1
+        && data.uid.size() <= 128
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 80
+        && data.email is string
+        && data.email.size() <= 120
+        && data.campusCity is string
+        && data.campusCity.size() >= 1
+        && data.campusCity.size() <= 80
+        && data.livingSetup is string
+        && isValidLivingSetup(data.livingSetup)
+        && data.monthlyAllowanceInr is number
+        && data.monthlyAllowanceInr > 0
+        && data.monthlyAllowanceInr <= 10000000
+        && data.alertThresholdPercent is number
+        && data.alertThresholdPercent >= 60
+        && data.alertThresholdPercent <= 95
+        && data.onboardingCompleted is bool
+        && data.proTrialActive is bool
+        && (!('proTrialStartedAtMillis' in data) || (data.proTrialStartedAtMillis is number && data.proTrialStartedAtMillis >= 0))
+        && (!('streakDays' in data) || (data.streakDays is number && data.streakDays >= 0 && data.streakDays <= 366))
+        && (!('lastCheckInDate' in data) || (data.lastCheckInDate is string && data.lastCheckInDate.size() <= 20))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidExpense(data, userId) {
+      return data.keys().hasAll([
+          'ownerId',
+          'title',
+          'amountInr',
+          'category',
+          'paymentMethod',
+          'note',
+          'timestampMillis',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'title',
+          'amountInr',
+          'category',
+          'paymentMethod',
+          'note',
+          'timestampMillis',
+          'splitId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 120
+        && data.amountInr is number
+        && data.amountInr > 0
+        && data.amountInr <= 10000000
+        && data.category is string
+        && isValidCategory(data.category)
+        && data.paymentMethod is string
+        && isValidPaymentMethod(data.paymentMethod)
+        && data.note is string
+        && data.note.size() <= 300
+        && data.timestampMillis is number
+        && data.timestampMillis > 0
+        && (!('splitId' in data) || (data.splitId is string && data.splitId.size() <= 128))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCategoryBudget(data, userId) {
+      return data.keys().hasAll([
+          'ownerId',
+          'category',
+          'limitInr',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'category',
+          'limitInr',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.category is string
+        && isValidCategory(data.category)
+        && data.limitInr is number
+        && data.limitInr >= 0
+        && data.limitInr <= 10000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFriend(data, userId) {
+      return data.keys().hasAll([
+          'ownerId',
+          'name',
+          'hostelOrTag',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'name',
+          'hostelOrTag',
+          'upiHandle',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 80
+        && data.hostelOrTag is string
+        && data.hostelOrTag.size() <= 80
+        && (!('upiHandle' in data) || (data.upiHandle is string && data.upiHandle.size() <= 80))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSplit(data, userId) {
+      return data.keys().hasAll([
+          'ownerId',
+          'title',
+          'totalAmountInr',
+          'paidBy',
+          'payerName',
+          'includeMyShare',
+          'myShareInr',
+          'shares',
+          'timestampMillis',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'title',
+          'totalAmountInr',
+          'paidBy',
+          'payerFriendId',
+          'payerName',
+          'includeMyShare',
+          'myShareInr',
+          'linkedExpenseId',
+          'shares',
+          'timestampMillis',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 120
+        && data.totalAmountInr is number
+        && data.totalAmountInr > 0
+        && data.totalAmountInr <= 10000000
+        && data.paidBy in ['ME', 'FRIEND']
+        && (!('payerFriendId' in data) || (data.payerFriendId is string && data.payerFriendId.size() <= 128))
+        && data.payerName is string
+        && data.payerName.size() >= 1
+        && data.payerName.size() <= 80
+        && data.includeMyShare is bool
+        && data.myShareInr is number
+        && data.myShareInr >= 0
+        && data.myShareInr <= 10000000
+        && (!('linkedExpenseId' in data) || (data.linkedExpenseId is string && data.linkedExpenseId.size() <= 128))
+        && data.shares is list
+        && data.shares.size() >= 1
+        && data.shares.size() <= 30
+        && data.shares[0] is map
+        && data.shares[0].keys().hasAll(['friendId', 'friendName', 'amountInr', 'settled'])
+        && data.shares[0].keys().hasOnly(['friendId', 'friendName', 'amountInr', 'settled'])
+        && data.shares[0].friendId is string
+        && data.shares[0].friendId.size() >= 1
+        && data.shares[0].friendId.size() <= 128
+        && data.shares[0].friendName is string
+        && data.shares[0].friendName.size() >= 1
+        && data.shares[0].friendName.size() <= 80
+        && data.shares[0].amountInr is number
+        && data.shares[0].amountInr >= 0
+        && data.shares[0].amountInr <= 10000000
+        && data.shares[0].settled is bool
+        && data.timestampMillis is number
+        && data.timestampMillis > 0
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'name',
+            'campusCity',
+            'livingSetup',
+            'monthlyAllowanceInr',
+            'alertThresholdPercent',
+            'onboardingCompleted',
+            'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'proTrialActive',
+            'proTrialStartedAtMillis',
+            'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'streakDays',
+            'lastCheckInDate',
+            'updatedAt'
+          ])
+        );
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /expenses/{expenseId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(expenseId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(expenseId)
+          && isValidExpense(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userDocExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(expenseId)
+          && isValidExpense(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title',
+            'amountInr',
+            'category',
+            'paymentMethod',
+            'note',
+            'timestampMillis',
+            'splitId',
+            'updatedAt'
+          ])
+          && userDocExists(userId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(expenseId);
+      }
+
+      match /categoryBudgets/{categoryId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(categoryId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(categoryId)
+          && isValidCategoryBudget(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userDocExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(categoryId)
+          && isValidCategoryBudget(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().category == existing().category
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['limitInr', 'updatedAt'])
+          && userDocExists(userId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(categoryId);
+      }
+
+      match /friends/{friendId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(friendId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(friendId)
+          && isValidFriend(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userDocExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(friendId)
+          && isValidFriend(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'hostelOrTag', 'upiHandle', 'updatedAt'])
+          && userDocExists(userId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(friendId);
+      }
+
+      match /splits/{splitId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(splitId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(splitId)
+          && isValidSplit(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userDocExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(splitId)
+          && isValidSplit(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['shares', 'updatedAt'])
+          && userDocExists(userId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(splitId);
+      }
+    }
+  }
+}
