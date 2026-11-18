@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signInWithPopup } from 'firebase/auth';
-import { ArrowRight, BellRing, IndianRupee, Receipt, Users } from 'lucide-react';
+import { ArrowRight, BellRing, IndianRupee, Users } from 'lucide-react';
 import { auth, googleProvider } from '../firebase';
 import { StudentHeroIllustration } from './Illustrations';
 
@@ -14,9 +14,24 @@ export function AuthGate() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Unable to sign in with Google. Please try again.';
-      setErrorMsg(msg);
+      const code =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? String((err as { code?: unknown }).code)
+          : '';
+      const rawMsg = err instanceof Error ? err.message : '';
+      const host = typeof window !== 'undefined' ? window.location.hostname : '';
+
+      if (code === 'auth/unauthorized-domain' || rawMsg.includes('unauthorized-domain')) {
+        setErrorMsg(
+          `This domain (${host}) is not authorized for Firebase sign-in yet. Add "${host}" in Firebase Console → Authentication → Settings → Authorized domains.`,
+        );
+      } else if (code === 'auth/popup-blocked') {
+        setErrorMsg('Sign-in popup was blocked by your browser. Please allow popups and try again.');
+      } else if (code === 'auth/popup-closed-by-user') {
+        setErrorMsg('Sign-in was cancelled before completing.');
+      } else {
+        setErrorMsg(rawMsg || 'Unable to sign in with Google. Please try again.');
+      }
       setSigningIn(false);
     }
   };
